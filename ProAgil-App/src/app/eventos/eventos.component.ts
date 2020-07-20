@@ -7,8 +7,23 @@ import { HttpClientModule, HttpClient } from '@angular/common/http';
   styleUrls: ['./eventos.component.css']
 })
 export class EventosComponent implements OnInit {
+  // tslint:disable-next-line:variable-name
+  _filtroLista: string;
 
-  eventos: any ;
+  get filtroLista(): string {
+    return this._filtroLista;
+  }
+
+  set filtroLista(value: string) {
+    this._filtroLista = value;
+    this.eventosFiltrados = this.filtroLista ? this.filtrarEventos(this.filtroLista) : this.eventos;
+  }
+
+  eventosFiltrados: any [];
+  eventos: any = [];
+  imagemLargura = 50;
+  imagemMargem = 2;
+  mostrarImgagem = false;
 
   constructor(private http: HttpClient) { }
 
@@ -17,6 +32,17 @@ export class EventosComponent implements OnInit {
     this.getEventos();
   }
 
+  filtrarEventos(filtrarPor: string): any[] {
+    filtrarPor = filtrarPor.toLocaleLowerCase();
+    return this.eventos.filter(
+      evento => evento.tema.toLocaleLowerCase().indexOf(filtrarPor) !== -1
+    );
+  }
+
+  // tslint:disable-next-line:typedef
+  alternarImagem(){
+    this.mostrarImgagem = !this.mostrarImgagem;
+  }
   // tslint:disable-next-line:typedef
   getEventos() {
     this.http.get('http://localhost:5000/api/values').subscribe( response => {
