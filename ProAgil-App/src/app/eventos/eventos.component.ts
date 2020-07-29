@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import {EventoService} from '../_services/evento.service';
+import { Evento } from '../_models/Evento';
 
 @Component({
   selector: 'app-eventos',
@@ -7,7 +8,8 @@ import { HttpClientModule, HttpClient } from '@angular/common/http';
   styleUrls: ['./eventos.component.css']
 })
 export class EventosComponent implements OnInit {
-  // tslint:disable-next-line:variable-name
+
+// tslint:disable-next-line:variable-name
   _filtroLista: string;
 
   get filtroLista(): string {
@@ -15,24 +17,23 @@ export class EventosComponent implements OnInit {
   }
 
   set filtroLista(value: string) {
-    this._filtroLista = value;
+    this._filtroLista = value.toString();
     this.eventosFiltrados = this.filtroLista ? this.filtrarEventos(this.filtroLista) : this.eventos;
   }
-
-  eventosFiltrados: any [];
-  eventos: any = [];
+  eventosFiltrados: Evento[] = [];
+  eventos: Evento[] = [];
   imagemLargura = 50;
   imagemMargem = 2;
   mostrarImgagem = false;
 
-  constructor(private http: HttpClient) { }
+  constructor(private eventoServices: EventoService) { }
 
   // tslint:disable-next-line:typedef
   ngOnInit() {
     this.getEventos();
   }
 
-  filtrarEventos(filtrarPor: string): any[] {
+  filtrarEventos(filtrarPor: string): Evento[] {
     filtrarPor = filtrarPor.toLocaleLowerCase();
     return this.eventos.filter(
       evento => evento.tema.toLocaleLowerCase().indexOf(filtrarPor) !== -1
@@ -40,16 +41,17 @@ export class EventosComponent implements OnInit {
   }
 
   // tslint:disable-next-line:typedef
-  alternarImagem(){
+  alternarImagem() {
     this.mostrarImgagem = !this.mostrarImgagem;
   }
   // tslint:disable-next-line:typedef
   getEventos() {
-    this.http.get('http://localhost:5000/api/values').subscribe( response => {
-      this.eventos = response;
-      console.log(response);
+    this.eventoServices.getAllEvento().subscribe(
+      (_eventos: Evento[]) => {
+      this.eventos = _eventos;
+      this.eventosFiltrados = this.eventos;
+
     }, error => {
-      console.log(error);
     });
   }
 }
