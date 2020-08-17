@@ -6,6 +6,7 @@ import { FormGroup, Validators, FormBuilder } from '@angular/forms';
 import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 import { defineLocale } from 'ngx-bootstrap/chronos';
 import { ptBrLocale } from 'ngx-bootstrap/locale';
+import { preserveWhitespacesDefault } from '@angular/compiler';
 defineLocale('pt-br', ptBrLocale);
 
 @Component({
@@ -15,9 +16,11 @@ defineLocale('pt-br', ptBrLocale);
 })
 export class EventosComponent implements OnInit {
 
-  eventosFiltrados: Evento[] = [];
-  eventos: Evento[] = [];
+  eventosFiltrados: Evento[];
+  eventos: Evento[];
   evento: Evento;
+  modoSalvar = 'post';
+  bodyDeletarEvento = '';
   imagemLargura = 50;
   imagemMargem = 2;
   mostrarImgagem = false;
@@ -42,6 +45,24 @@ export class EventosComponent implements OnInit {
     this.eventosFiltrados = this.filtroLista ? this.filtrarEventos(this.filtroLista) : this.eventos;
   }
 
+  novoEvento(templete: any) {
+    this.modoSalvar = 'post';
+    this.openModal(templete);
+  }
+
+  excluirEvento(evento: Evento, template: any) {
+    this.openModal(template);
+    this.evento = evento;
+    this.bodyDeletarEvento = `Tem certeza que deseja excluir o Evento: ${evento.tema}, Código: ${evento.id}`;
+  }
+
+  editarEvento(evento: Evento, templete: any) {
+    this.modoSalvar = 'put';
+    this.openModal(templete);
+    this.evento = evento;
+    this.registerForm.patchValue(evento);
+  }
+
   openModal(template: any) {
     this.registerForm.reset();
     template.show();
@@ -63,19 +84,40 @@ export class EventosComponent implements OnInit {
   }
   salvarAlteracao(template: any) {
     if (this.registerForm.valid) {
-      this.evento = Object.assign({}, this.registerForm.value);
-      this.eventoService.postEvento(this.evento).subscribe(
-        (novoEvento: Evento) => {
-          console.log(novoEvento);
+     if(this.modoSalvar === 'post'){
+        this.evento = Object.assign({}, this.registerForm.value);
+        this.eventoService.postEvento(this.evento).subscribe(
+          (novoEvento: Evento) => {
+            console.log(novoEvento);
+            template.hide();
+            this.getEventos();
+          }, error => {
+            console.log(error);
+          }
+        );
+     } else {
+      this.evento = Object.assign({id: this.evento.id}, this.registerForm.value);
+      this.eventoService.putEvento(this.evento).subscribe(
+        () => {
           template.hide();
           this.getEventos();
         }, error => {
           console.log(error);
         }
       );
+     }
     }
   }
-
+  confirmeDelete(template: any) {
+    this.eventoService.deleteEvento(this.evento.id).subscribe(
+      () => {
+          template.hide();
+          this.getEventos();
+        }, error => {
+          console.log(error);
+        }
+    );
+  }
   validation() {
     this.registerForm = this.fb.group({
       tema:       ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
